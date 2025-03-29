@@ -1,5 +1,6 @@
 ﻿;;;;;;;;;; Loading ;;;;;;;;;;
     #include %A_Scriptdir%\libs\CoreLibsFor_AHK\BaseLibs\Header.ahk
+    ;--------------------------------------------------
     ;#IfWinActive, 
     ;global PWN := "" ; Program window name
 
