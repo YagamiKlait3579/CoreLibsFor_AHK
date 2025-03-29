@@ -1,0 +1,27 @@
+name: Sync CoreLibs
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download CoreLibs
+        run: |
+          mkdir core-src
+          curl -sL https://api.github.com/repos/${{ github.repository }}/tarball/main | tar xz -C core-src --strip-components=1
+          echo "Downloaded $(find core-src -type f | wc -l) files"
+
+      - name: Sync PrivateScriptsOn_AHK
+        run: |
+          git clone -q https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/YagamiKlait3579/PrivateScriptsOn_AHK.git
+          cd PrivateScriptsOn_AHK
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          rm -rf libs/CoreLibsFor_AHK
+          cp -r ../core-src libs/CoreLibsFor_AHK
+          rm -rf libs/CoreLibsFor_AHK/.git* libs/CoreLibsFor_AHK/.github
+          git add -f libs/CoreLibsFor_AHK/
+          git commit --allow-empty -m "Auto-sync: $(TZ='Asia/Krasnoyarsk' date '+%Y-%m-%d %H:%M:%S')"
+          git push -q origin main
