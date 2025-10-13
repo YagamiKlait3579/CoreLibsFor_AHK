@@ -65,19 +65,6 @@ jobs:
           git commit --allow-empty -m "Auto-sync: $(TZ='Asia/Krasnoyarsk' date '+%Y-%m-%d %H:%M:%S')"
           git push -q origin main
 
-      - name: Sync GunfireReborn
-        run: |
-          git clone -q https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/YagamiKlait3579/GunfireReborn.git
-          cd GunfireReborn
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          rm -rf libs/CoreLibsFor_AHK
-          cp -r ../core-src libs/CoreLibsFor_AHK
-          rm -rf libs/CoreLibsFor_AHK/.git* libs/CoreLibsFor_AHK/.github
-          git add -f libs/CoreLibsFor_AHK/
-          git commit --allow-empty -m "Auto-sync: $(TZ='Asia/Krasnoyarsk' date '+%Y-%m-%d %H:%M:%S')"
-          git push -q origin main
-
       - name: Sync MarvelRivals
         run: |
           git clone -q https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/YagamiKlait3579/MarvelRivals.git
