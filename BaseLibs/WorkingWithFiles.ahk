@@ -134,6 +134,28 @@
 ;;;;;;;;;;  Working with Images files ;;;;;;;;;;
     ReadImages(DllPath, ResourceName, ResourceType = "PNG") {
         ;DllCall("LoadLibrary", "Str", "Gdiplus.dll")
+        /* 
+            Извлекает изображение из DLL-файла и возвращает HBITMAP.
+            Подходит для использования с ImageSearch или GUI Picture.
+
+            Параметры:
+                DllPath      - Путь к DLL-файлу
+                ResourceName - Имя ресурса (изображения) внутри DLL
+                ResourceType - Тип ресурса (по умолчанию "PNG")
+
+            Возвращаемое значение:
+                HBITMAP - дескриптор изображения (для использования с "HBITMAP:")
+
+            Примеры:
+                ; ImageSearch
+                ImageSearch, varX, varY, x1, y1, x2, y2, % "HBITMAP:" ReadImages("resources.dll", "logo")
+                ; GUI Picture
+                Gui, Add, Picture, , % "HBITMAP:" ReadImages("resources.dll", "icon")
+
+            Важно:
+                Для работы функции необходимо предварительно загрузить библиотеку Gdiplus.dll
+                (вне этой функции, например, при старте скрипта)
+        */
         pToken := Gdip_Startup()
         
         hModule := DllCall("LoadLibraryEx", "Str", DllPath, "UInt", 0, "UInt", 2)
@@ -160,6 +182,27 @@
     }
 
     GetImageSizeFromDll(DllPath, ResourceName, ResourceType := "PNG") {
+        ;DllCall("LoadLibrary", "Str", "Gdiplus.dll")
+        /* 
+            Получает размеры изображения из DLL-файла без сохранения HBITMAP.
+
+            Параметры:
+                DllPath      - Путь к DLL-файлу
+                ResourceName - Имя ресурса (изображения) внутри DLL
+                ResourceType - Тип ресурса (по умолчанию "PNG")
+
+            Возвращаемое значение:
+                Объект с полями width (ширина) и height (высота)
+
+            Пример:
+                size := GetImageSizeFromDll("resources.dll", "logo")
+                MsgBox, % "Ширина: " size.width "`n Высота: " size.height
+
+            Важно:
+                Для работы функции необходимо предварительно загрузить библиотеку Gdiplus.dll
+                (вне этой функции, например, при старте скрипта)
+        */
+
         pToken := Gdip_Startup()
         
         hModule := DllCall("LoadLibraryEx", "Str", DllPath, "UInt", 0, "UInt", 2)
@@ -184,4 +227,46 @@
         Gdip_Shutdown(pToken)
 
         Return {"width": width, "height": height}
+    }
+
+    CreateImage(DllPath, ResourceName, ResourceType = "PNG") {
+        ;DllCall("LoadLibrary", "Str", "Gdiplus.dll")
+        /* 
+            Извлекает изображение из DLL и сохраняет во временную папку как файл.
+            Возвращает путь к созданному файлу.
+        
+            Параметры:
+                DllPath      - Путь к DLL-файлу
+                ResourceName - Имя ресурса (изображения) внутри DLL
+                ResourceType - Тип ресурса (по умолчанию "PNG")
+        
+            Возвращаемое значение:
+                Путь к временному файлу (например, C:\Users\...\Temp\TempImage_имя.png)
+        
+            Пример:
+                imagePath := CreateImage("resources.dll", "avatar")
+                Gui, Add, Picture, , % imagePath
+        
+            Важно:
+                1. Для работы функции необходимо предварительно загрузить библиотеку Gdiplus.dll
+                   (вне этой функции, например, при старте скрипта)
+                2. Не забудьте удалять временные файлы при закрытии скрипта!
+                   Используйте OnExit() для автоматической очистки:
+                   https://www.autohotkey.com/docs/v1/lib/OnExit.htm#function
+        */
+
+        hModule := DllCall("LoadLibraryEx", "Str", DllPath, "UInt", 0, "UInt", 2)
+        hRes := DllCall("FindResource", "Ptr", hModule, ((ResourceName ~= "^\d+$") ? "UInt" : "Str"), ResourceName, "Str", ResourceType)
+        hResData := DllCall("LoadResource", "Ptr", hModule, "Ptr", hRes)
+        pResData := DllCall("LockResource", "Ptr", hResData)
+        ResSize := DllCall("SizeofResource", "Ptr", hModule, "Ptr", hRes)
+
+        TempImagePath := A_Temp "\TempImage_" ResourceName ".png"
+        FileDelete, %TempImagePath%
+        hFile := DllCall("CreateFile", "Str", TempImagePath, "UInt", 0x40000000, "UInt", 0, "UInt", 0, "UInt", 2, "UInt", 0, "UInt", 0, "Ptr")
+        DllCall("WriteFile", "Ptr", hFile, "Ptr", pResData, "UInt", ResSize, "UInt*", BytesWritten, "UInt", 0)
+        DllCall("CloseHandle", "Ptr", hFile)
+
+        DllCall("FreeLibrary", "Ptr", hModule)
+        return TempImagePath
     }
